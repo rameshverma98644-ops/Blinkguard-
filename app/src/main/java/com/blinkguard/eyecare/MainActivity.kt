@@ -40,12 +40,7 @@ class MainActivity : Activity() {
     private var remindersOn = true
     private lateinit var toggleBtn: Button
     private lateinit var permissionCard: LinearLayout
-    private lateinit var summaryCard: LinearLayout
-    private lateinit var summaryActiveRow: TextView
-    private lateinit var summaryMode: TextView
-    private lateinit var summaryDim: TextView
-    private lateinit var summaryWarm: TextView
-    private lateinit var summaryRemind: TextView
+    private lateinit var setupActiveRow: LinearLayout
     private lateinit var reminderStatus: TextView
     private lateinit var currentMinutes: TextView
     private lateinit var reminderSwitch: Switch
@@ -180,24 +175,10 @@ class MainActivity : Activity() {
         val h = px * 0.78f
         // Vivid green, as in the reference layout image
         val logoGreen = Color.rgb(25, 222, 145)
-        // Soft halo behind the shield
-        val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = logoGreen
-            alpha = 26
-            style = Paint.Style.FILL
-        }
-        canvas.drawCircle(cx, cy, px * 0.46f, halo)
-        val haloRing = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = logoGreen
-            alpha = 50
-            style = Paint.Style.STROKE
-            strokeWidth = px / 90f
-        }
-        canvas.drawCircle(cx, cy, px * 0.46f, haloRing)
         val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = logoGreen
             style = Paint.Style.STROKE
-            strokeWidth = px / 11f
+            strokeWidth = px / 14f
             strokeJoin = Paint.Join.ROUND
             strokeCap = Paint.Cap.ROUND
         }
@@ -229,17 +210,12 @@ class MainActivity : Activity() {
             color = logoGreen
             style = Paint.Style.FILL
         }
-        canvas.drawCircle(cx, eyeCy, eyeW * 0.42f, iris)
+        canvas.drawCircle(cx, eyeCy, eyeW * 0.38f, iris)
         val pupil = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.rgb(7, 11, 16)
             style = Paint.Style.FILL
         }
-        canvas.drawCircle(cx, eyeCy, eyeW * 0.20f, pupil)
-        val highlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = white
-            style = Paint.Style.FILL
-        }
-        canvas.drawCircle(cx - eyeW * 0.14f, eyeCy - eyeW * 0.14f, eyeW * 0.08f, highlight)
+        canvas.drawCircle(cx, eyeCy, eyeW * 0.18f, pupil)
         return bitmap
     }
 
@@ -252,10 +228,10 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(18), dp(20), dp(28))
         }
 
-        // Logo + wordmark, centred — larger, like the reference layout
+        // Logo + wordmark, centred — minimal
         val logo = ImageView(this).apply {
             setImageDrawable(BitmapDrawable(resources, makeLogoBitmap(280)))
-            layoutParams = LinearLayout.LayoutParams(dp(104), dp(104)).apply { gravity = Gravity.CENTER_HORIZONTAL }
+            layoutParams = LinearLayout.LayoutParams(dp(84), dp(84)).apply { gravity = Gravity.CENTER_HORIZONTAL }
         }
         root.addView(logo)
         val wordmark = LinearLayout(this).apply {
@@ -263,8 +239,8 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(0, dp(8), 0, 0)
         }
-        wordmark.addView(label("Blink", 32f, white, bold = true))
-        wordmark.addView(label("Guard", 32f, accent, bold = true))
+        wordmark.addView(label("Blink", 30f, white, bold = true))
+        wordmark.addView(label("Guard", 30f, accent, bold = true))
         root.addView(wordmark)
         root.addView(label("System-Wide Eye Filter &\nScreen-Time Reminder", 14f, grey).apply {
             gravity = Gravity.CENTER
@@ -362,23 +338,22 @@ class MainActivity : Activity() {
         root.addView(toggleWrap)
         root.addView(Space(this).apply { minimumHeight = dp(16) })
 
-        // Shield Active summary (image screen 4, only when running)
-        summaryCard = cardLayout()
-        summaryActiveRow = label("Shield is Active", 15f, accent, bold = true)
-        summaryCard.addView(summaryActiveRow)
-        summaryCard.addView(label("Protecting your eyes across apps", 13f, grey).apply {
-            setPadding(0, dp(2), 0, dp(10))
-        })
-        summaryMode = summaryRow(summaryCard, "sun", "Colour Mode", "Warm")
-        summaryDim = summaryRow(summaryCard, "half", "Brightness Dimmer", "20%")
-        summaryWarm = summaryRow(summaryCard, "sun", "Warmth Intensity", "35%")
-        summaryRemind = summaryRow(summaryCard, "clock", "Rest Reminder", "Every 60 mins")
-        summaryCard.visibility = View.GONE
-        root.addView(summaryCard)
-        root.addView(Space(this).apply { minimumHeight = dp(16) })
-
-        // Your setup at a glance — always visible, live values
+        // Single card on Home: setup, with the Active state folded in
         val setupCard = cardLayout()
+        setupActiveRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, dp(10))
+            visibility = View.GONE
+        }
+        setupActiveRow.addView(IconView(this, "check", accent).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginEnd = dp(8) }
+        })
+        val activeTexts = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        activeTexts.addView(label("Shield is Active", 15f, accent, bold = true))
+        activeTexts.addView(label("Protecting your eyes across apps", 12f, grey))
+        setupActiveRow.addView(activeTexts)
+        setupCard.addView(setupActiveRow)
         setupCard.addView(label("YOUR SETUP", 11f, accent, bold = true).apply { letterSpacing = 0.08f })
         setupMode = summaryRow(setupCard, "sun", "Colour Mode", "Warm")
         setupDim = summaryRow(setupCard, "half", "Brightness Dimmer", "20%")
@@ -388,16 +363,12 @@ class MainActivity : Activity() {
             setPadding(0, dp(6), 0, 0)
         })
         root.addView(setupCard)
-        root.addView(Space(this).apply { minimumHeight = dp(16) })
 
-        // Benefit rows (image screen 1)
-        val benefits = cardLayout()
-        benefits.addView(label("WHY BLINKGUARD", 11f, accent, bold = true).apply { letterSpacing = 0.08f })
-        benefits.addView(benefitRow("eye", Color.rgb(167, 139, 250), "Protects your eyes", "Gentle tint across all apps"))
-        benefits.addView(benefitRow("sun", Color.rgb(251, 191, 36), "Reduces blue light & brightness", "Warmer screen, easier on eyes"))
-        benefits.addView(benefitRow("drop", Color.rgb(96, 165, 250), "Reminds you to rest & drink water", "A short break, right on time"))
-        benefits.addView(benefitRow("heart", Color.rgb(244, 114, 182), "Healthy digital habits", "Small pauses, every day"))
-        root.addView(benefits)
+        // Plain line under the card — no second card
+        root.addView(label("Works across WhatsApp, YouTube and every app.", 13f, grey).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(16), 0, 0)
+        })
 
         scroll.addView(root)
         return scroll
@@ -701,25 +672,25 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(18), dp(20), dp(28))
         }
 
-        // Logo header, matching the Home page — bigger, premium
+        // Logo header, matching the Home page — minimal
         root.addView(ImageView(this).apply {
             setImageDrawable(BitmapDrawable(resources, makeLogoBitmap(280)))
-            layoutParams = LinearLayout.LayoutParams(dp(88), dp(88)).apply { gravity = Gravity.CENTER_HORIZONTAL }
+            layoutParams = LinearLayout.LayoutParams(dp(72), dp(72)).apply { gravity = Gravity.CENTER_HORIZONTAL }
         })
         val aboutWordmark = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(0, dp(8), 0, 0)
         }
-        aboutWordmark.addView(label("Blink", 28f, white, bold = true))
-        aboutWordmark.addView(label("Guard", 28f, accent, bold = true))
+        aboutWordmark.addView(label("Blink", 26f, white, bold = true))
+        aboutWordmark.addView(label("Guard", 26f, accent, bold = true))
         root.addView(aboutWordmark)
         root.addView(label("Your eyes deserve a break.", 13f, grey).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(4), 0, 0)
         })
         root.addView(TextView(this).apply {
-            text = "Version 1.5"
+            text = "Version 1.6"
             textSize = 12f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(accent)
@@ -857,7 +828,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(0, dp(20), 0, 0)
         })
-        root.addView(label("BlinkGuard • Version 1.5", 12f, grey).apply {
+        root.addView(label("BlinkGuard • Version 1.6", 12f, grey).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(4), 0, 0)
         })
@@ -1026,7 +997,6 @@ class MainActivity : Activity() {
         refreshPermissionStatus()
         updateToggle(EyeShieldService.isRunning)
         updatePreview()
-        updateSummary()
     }
 
     private fun refreshPermissionStatus() {
@@ -1053,9 +1023,8 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun updateStatusPill() {
+    private fun updateStatusPill(active: Boolean) {
         if (!::statusDot.isInitialized) return
-        val active = EyeShieldService.isRunning && hasOverlayPermission()
         pulseAnimator?.cancel()
         pulseAnimator = null
         if (active) {
@@ -1081,10 +1050,10 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun updateSummary() {
-        if (!::summaryCard.isInitialized) return
-        val running = EyeShieldService.isRunning && hasOverlayPermission()
-        summaryCard.visibility = if (running) View.VISIBLE else View.GONE
+    private fun updateSummary(active: Boolean) {
+        if (::setupActiveRow.isInitialized) {
+            setupActiveRow.visibility = if (active) View.VISIBLE else View.GONE
+        }
         if (::setupMode.isInitialized) {
             setupMode.text = modeDisplayName()
             setupDim.text = "$dimLevel%"
@@ -1097,13 +1066,7 @@ class MainActivity : Activity() {
             aboutSetupWarm.text = "$warmthLevel%"
             aboutSetupRemind.text = if (remindersOn) "Every $selectedLimit mins" else "Off"
         }
-        if (running) {
-            summaryMode.text = modeDisplayName()
-            summaryDim.text = "$dimLevel%"
-            summaryWarm.text = "$warmthLevel%"
-            summaryRemind.text = if (remindersOn) "Every $selectedLimit mins" else "Off"
-        }
-        updateStatusPill()
+        updateStatusPill(active)
     }
 
     private fun updateToggle(running: Boolean) {
@@ -1121,7 +1084,7 @@ class MainActivity : Activity() {
         }
         updateReminderStatus()
         refreshPermissionStatus()
-        updateSummary()
+        updateSummary(active)
     }
 
     // ---------- Shared helpers ----------
