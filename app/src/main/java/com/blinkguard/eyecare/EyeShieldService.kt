@@ -28,6 +28,7 @@ class EyeShieldService : Service() {
     private var popupView: android.view.View? = null
     private val handler = Handler(Looper.getMainLooper())
     private var limitMinutes = 60
+    private var remindersOn = true
     private var screenOn = true
     private var remainingMs = 60 * 60_000L
     private var intervalStartedAt = 0L
@@ -71,7 +72,18 @@ class EyeShieldService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            "START_SHIELD", "UPDATE_FILTER" -> {
+            "START_SHIELD" -> {
+                currentDim = intent.getIntExtra("DIM", currentDim).coerceIn(0, 75)
+                currentWarmth = intent.getIntExtra("WARMTH", currentWarmth).coerceIn(0, 80)
+                currentMode = intent.getStringExtra("MODE") ?: currentMode
+                limitMinutes = intent.getIntExtra("LIMIT_MINS", limitMinutes).coerceIn(1, 240)
+                remindersOn = intent.getBooleanExtra("REMINDERS_ON", remindersOn)
+                if (filterView == null) createSystemFilterOverlay()
+                updateFilterColor()
+                resetReminderClock()
+                refreshNotification()
+            }
+            "UPDATE_FILTER" -> {
                 currentDim = intent.getIntExtra("DIM", currentDim).coerceIn(0, 75)
                 currentWarmth = intent.getIntExtra("WARMTH", currentWarmth).coerceIn(0, 80)
                 currentMode = intent.getStringExtra("MODE") ?: currentMode
@@ -80,11 +92,18 @@ class EyeShieldService : Service() {
             }
             "UPDATE_TIMER" -> {
                 limitMinutes = intent.getIntExtra("LIMIT_MINS", limitMinutes).coerceIn(1, 240)
+                remindersOn = intent.getBooleanExtra("REMINDERS_ON", remindersOn)
                 resetReminderClock()
                 refreshNotification()
             }
             "TEST_POPUP" -> showSystemRestPopup()
             "RESET_TIMER" -> resetReminderClock()
+            "SNOOZE" -> {
+                removePopup()
+                remainingMs = 10 * 60_000L
+                intervalStartedAt = android.os.SystemClock.elapsedRealtime()
+                scheduleReminder()
+            }
             "STOP_SERVICE" -> {
                 stopSelf()
                 return START_NOT_STICKY
@@ -131,12 +150,12 @@ class EyeShieldService : Service() {
         handler.removeCallbacks(reminderRunnable)
         remainingMs = limitMinutes.coerceIn(1, 240) * 60_000L
         intervalStartedAt = android.os.SystemClock.elapsedRealtime()
-        if (screenOn) scheduleReminder()
+        if (screenOn && remindersOn) scheduleReminder()
     }
 
     private fun scheduleReminder() {
         handler.removeCallbacks(reminderRunnable)
-        if (screenOn && isRunning) {
+        if (screenOn && isRunning && remindersOn) {
             intervalStartedAt = android.os.SystemClock.elapsedRealtime()
             handler.postDelayed(reminderRunnable, remainingMs.coerceAtLeast(1_000L))
         }
@@ -192,7 +211,7 @@ class EyeShieldService : Service() {
             }
         }
         container.addView(TextView(this).apply {
-            text = "⏰ $limitMinutes MINUTES"
+            text = "$limitMinutes MINUTES WHILE SHIELD IS ON"
             setTextColor(Color.parseColor("#34D399"))
             textSize = 12f
         })
@@ -203,7 +222,7 @@ class EyeShieldService : Service() {
             setPadding(0, dp(12), 0, dp(10))
         })
         container.addView(TextView(this).apply {
-            text = "• Look about 20 feet away for 20 seconds\n• Blink slowly a few times\n• Stretch your shoulders and drink water"
+            text = "• Look about 20 feet away for 20 seconds\n• Blink slowly a few times\n• Drink a glass of water"
             setTextColor(Color.parseColor("#D1D5DB"))
             textSize = 14f
             setPadding(0, 0, 0, dp(16))
@@ -213,6 +232,15 @@ class EyeShieldService : Service() {
             setOnClickListener {
                 removePopup()
                 resetReminderClock()
+            }
+        })
+        container.addView(Button(this).apply {
+            text = "Remind me later"
+            setOnClickListener {
+                removePopup()
+                remainingMs = 10 * 60_000L
+                intervalStartedAt = android.os.SystemClock.elapsedRealtime()
+                scheduleReminder()
             }
         })
 
