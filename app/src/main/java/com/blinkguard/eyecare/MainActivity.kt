@@ -171,9 +171,9 @@ class MainActivity : Activity() {
         navHome.setTextColor(if (tab == 0) accent else grey)
         navSettings.setTextColor(if (tab == 1) accent else grey)
         navAbout.setTextColor(if (tab == 2) accent else grey)
-        navHome.setTypeface(typeface, if (tab == 0) Typeface.BOLD else Typeface.NORMAL)
-        navSettings.setTypeface(typeface, if (tab == 1) Typeface.BOLD else Typeface.NORMAL)
-        navAbout.setTypeface(typeface, if (tab == 2) Typeface.BOLD else Typeface.NORMAL)
+        navHome.setTypeface(Typeface.DEFAULT, if (tab == 0) Typeface.BOLD else Typeface.NORMAL)
+        navSettings.setTypeface(Typeface.DEFAULT, if (tab == 1) Typeface.BOLD else Typeface.NORMAL)
+        navAbout.setTypeface(Typeface.DEFAULT, if (tab == 2) Typeface.BOLD else Typeface.NORMAL)
     }
 
     // ---------- Home page ----------
