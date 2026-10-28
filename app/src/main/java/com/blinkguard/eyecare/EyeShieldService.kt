@@ -211,24 +211,26 @@ class EyeShieldService : Service() {
             }
         }
         container.addView(TextView(this).apply {
-            text = "$limitMinutes MINUTES WHILE SHIELD IS ON"
+            text = "$limitMinutes MINS WHILE SHIELD IS ON"
             setTextColor(Color.parseColor("#34D399"))
             textSize = 12f
+            gravity = Gravity.CENTER
         })
         container.addView(TextView(this).apply {
-            text = "Rest your eyes & drink water"
+            text = "Rest Your Eyes &\nDrink Water"
             setTextColor(Color.WHITE)
-            textSize = 20f
-            setPadding(0, dp(12), 0, dp(10))
+            textSize = 22f
+            gravity = Gravity.CENTER
+            setPadding(0, dp(12), 0, dp(12))
         })
         container.addView(TextView(this).apply {
-            text = "• Look about 20 feet away for 20 seconds\n• Blink slowly a few times\n• Drink a glass of water"
+            text = "1. Look 20 feet away for 20 seconds\n2. Blink slowly 10 times to re-wet eyes\n3. Roll your shoulders\n4. Drink 1 glass of water"
             setTextColor(Color.parseColor("#D1D5DB"))
             textSize = 14f
             setPadding(0, 0, 0, dp(16))
         })
         container.addView(Button(this).apply {
-            text = "Done — reset reminder"
+            text = "✓  Done! Drank Water & Reset Timer"
             setOnClickListener {
                 removePopup()
                 resetReminderClock()
