@@ -164,61 +164,6 @@ class MainActivity : Activity() {
         }
     }
 
-    // ---------- Logo bitmap: shield + eye ----------
-
-    private fun makeLogoBitmap(px: Int): Bitmap {
-        val bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val cx = px / 2f
-        val cy = px / 2f
-        val w = px * 0.68f
-        val h = px * 0.78f
-        // Vivid green, as in the reference layout image
-        val logoGreen = Color.rgb(25, 222, 145)
-        val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = logoGreen
-            style = Paint.Style.STROKE
-            strokeWidth = px / 14f
-            strokeJoin = Paint.Join.ROUND
-            strokeCap = Paint.Cap.ROUND
-        }
-        val shield = Path().apply {
-            moveTo(cx - w / 2, cy - h * 0.30f)
-            lineTo(cx, cy - h * 0.16f)
-            lineTo(cx + w / 2, cy - h * 0.30f)
-            quadTo(cx + w / 2, cy + h * 0.14f, cx, cy + h * 0.42f)
-            quadTo(cx - w / 2, cy + h * 0.14f, cx - w / 2, cy - h * 0.30f)
-            close()
-        }
-        canvas.drawPath(shield, outline)
-        // Eye: filled white almond, like the reference image
-        val eyeCy = cy - h * 0.02f
-        val eyeW = w * 0.32f
-        val eyeH = h * 0.13f
-        val eyePath = Path().apply {
-            moveTo(cx - eyeW, eyeCy)
-            cubicTo(cx - eyeW * 0.45f, eyeCy - eyeH, cx + eyeW * 0.45f, eyeCy - eyeH, cx + eyeW, eyeCy)
-            cubicTo(cx + eyeW * 0.45f, eyeCy + eyeH, cx - eyeW * 0.45f, eyeCy + eyeH, cx - eyeW, eyeCy)
-            close()
-        }
-        val eyePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = white
-            style = Paint.Style.FILL
-        }
-        canvas.drawPath(eyePath, eyePaint)
-        val iris = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = logoGreen
-            style = Paint.Style.FILL
-        }
-        canvas.drawCircle(cx, eyeCy, eyeW * 0.38f, iris)
-        val pupil = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(7, 11, 16)
-            style = Paint.Style.FILL
-        }
-        canvas.drawCircle(cx, eyeCy, eyeW * 0.18f, pupil)
-        return bitmap
-    }
-
     // ---------- Home page (image screen 1 / 4) ----------
 
     private fun buildHomePage(): ScrollView {
@@ -230,7 +175,7 @@ class MainActivity : Activity() {
 
         // Logo + wordmark, centred — minimal
         val logo = ImageView(this).apply {
-            setImageDrawable(BitmapDrawable(resources, makeLogoBitmap(280)))
+            setImageResource(R.drawable.logo)
             layoutParams = LinearLayout.LayoutParams(dp(84), dp(84)).apply { gravity = Gravity.CENTER_HORIZONTAL }
         }
         root.addView(logo)
@@ -674,7 +619,7 @@ class MainActivity : Activity() {
 
         // Logo header, matching the Home page — minimal
         root.addView(ImageView(this).apply {
-            setImageDrawable(BitmapDrawable(resources, makeLogoBitmap(280)))
+            setImageResource(R.drawable.logo)
             layoutParams = LinearLayout.LayoutParams(dp(72), dp(72)).apply { gravity = Gravity.CENTER_HORIZONTAL }
         })
         val aboutWordmark = LinearLayout(this).apply {
@@ -690,7 +635,7 @@ class MainActivity : Activity() {
             setPadding(0, dp(4), 0, 0)
         })
         root.addView(TextView(this).apply {
-            text = "Version 1.6"
+            text = "Version 1.7"
             textSize = 12f
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(accent)
@@ -828,7 +773,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(0, dp(20), 0, 0)
         })
-        root.addView(label("BlinkGuard • Version 1.6", 12f, grey).apply {
+        root.addView(label("BlinkGuard • Version 1.7", 12f, grey).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(4), 0, 0)
         })
