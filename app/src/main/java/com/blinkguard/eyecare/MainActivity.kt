@@ -56,7 +56,7 @@ class MainActivity : Activity() {
     private lateinit var settingsScroll: ScrollView
     private lateinit var aboutScroll: ScrollView
     private lateinit var aboutPermissionText: TextView
-    private val navIcons = mutableListOf<TextView>()
+    private val navIcons = mutableListOf<IconView>()
     private val navLabels = mutableListOf<TextView>()
     private val tileLayouts = mutableMapOf<String, LinearLayout>()
     private val tileLabels = mutableMapOf<String, TextView>()
@@ -109,18 +109,15 @@ class MainActivity : Activity() {
             background = rounded(panel, 0, border, dp(1))
             setPadding(dp(8), dp(8), dp(8), dp(12))
         }
-        listOf(Triple("⌂", "Home", 0), Triple("⚙", "Settings", 1), Triple("ⓘ", "About", 2)).forEach { (icon, name, tab) ->
+        listOf(Triple("home", "Home", 0), Triple("gear", "Settings", 1), Triple("info", "About", 2)).forEach { (icon, name, tab) ->
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 setPadding(0, dp(4), 0, dp(4))
             }
-            val iconView = TextView(this).apply {
-                text = icon
-                textSize = 20f
-                gravity = Gravity.CENTER
-                setTextColor(grey)
+            val iconView = IconView(this, icon, grey).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(24), dp(24))
             }
             val labelView = TextView(this).apply {
                 text = name
@@ -152,7 +149,7 @@ class MainActivity : Activity() {
         homeScroll.visibility = if (tab == 0) View.VISIBLE else View.GONE
         settingsScroll.visibility = if (tab == 1) View.VISIBLE else View.GONE
         aboutScroll.visibility = if (tab == 2) View.VISIBLE else View.GONE
-        navIcons.forEachIndexed { i, v -> v.setTextColor(if (i == tab) accent else grey) }
+        navIcons.forEachIndexed { i, v -> v.setIconColor(if (i == tab) accent else grey) }
         navLabels.forEachIndexed { i, v ->
             v.setTextColor(if (i == tab) accent else grey)
             v.setTypeface(Typeface.DEFAULT, if (i == tab) Typeface.BOLD else Typeface.NORMAL)
@@ -241,7 +238,7 @@ class MainActivity : Activity() {
             setPadding(dp(14), dp(12), dp(14), dp(12))
             visibility = View.GONE
         }
-        permissionCard.addView(label("⚠  One step left", 15f, warning, bold = true))
+        permissionCard.addView(label("One step left", 15f, warning, bold = true))
         permissionCard.addView(label("Allow overlay access to use Eye Shield across apps.", 13f, lightGrey).apply {
             setPadding(0, dp(4), 0, dp(10))
         })
@@ -305,25 +302,25 @@ class MainActivity : Activity() {
 
         // Shield Active summary (image screen 4, only when running)
         summaryCard = cardLayout()
-        summaryActiveRow = label("●  Shield is Active", 15f, accent, bold = true)
+        summaryActiveRow = label("Shield is Active", 15f, accent, bold = true)
         summaryCard.addView(summaryActiveRow)
         summaryCard.addView(label("Protecting your eyes across apps", 13f, grey).apply {
             setPadding(0, dp(2), 0, dp(10))
         })
-        summaryMode = summaryRow(summaryCard, "☀", "Colour Mode", "Warm")
-        summaryDim = summaryRow(summaryCard, "◐", "Brightness Dimmer", "20%")
-        summaryWarm = summaryRow(summaryCard, "☀", "Warmth Intensity", "35%")
-        summaryRemind = summaryRow(summaryCard, "◷", "Rest Reminder", "Every 60 mins")
+        summaryMode = summaryRow(summaryCard, "sun", "Colour Mode", "Warm")
+        summaryDim = summaryRow(summaryCard, "half", "Brightness Dimmer", "20%")
+        summaryWarm = summaryRow(summaryCard, "sun", "Warmth Intensity", "35%")
+        summaryRemind = summaryRow(summaryCard, "clock", "Rest Reminder", "Every 60 mins")
         summaryCard.visibility = View.GONE
         root.addView(summaryCard)
         root.addView(Space(this).apply { minimumHeight = dp(16) })
 
         // Benefit rows (image screen 1)
         val benefits = cardLayout()
-        benefits.addView(benefitRow("◉", "Protects your eyes across all apps"))
-        benefits.addView(benefitRow("☀", "Reduces blue light & brightness"))
-        benefits.addView(benefitRow("◷", "Reminds you to rest and drink water"))
-        benefits.addView(benefitRow("♥", "Helps maintain healthy digital habits"))
+        benefits.addView(benefitRow("eye", Color.rgb(167, 139, 250), "Protects your eyes across all apps"))
+        benefits.addView(benefitRow("sun", Color.rgb(251, 191, 36), "Reduces blue light & brightness"))
+        benefits.addView(benefitRow("drop", Color.rgb(96, 165, 250), "Reminds you to rest and drink water"))
+        benefits.addView(benefitRow("heart", Color.rgb(244, 114, 182), "Helps maintain healthy digital habits"))
         root.addView(benefits)
 
         scroll.addView(root)
@@ -336,12 +333,8 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(8), 0, dp(8))
         }
-        row.addView(TextView(this).apply {
-            text = icon
-            textSize = 16f
-            setTextColor(warm)
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(dp(28), dp(28))
+        row.addView(IconView(this, icon, warm).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginEnd = dp(6) }
         })
         row.addView(label(title, 14f, lightGrey).apply {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -352,20 +345,21 @@ class MainActivity : Activity() {
         return valueView
     }
 
-    private fun benefitRow(icon: String, text: String): LinearLayout {
+    private fun benefitRow(icon: String, iconColor: Int, text: String): LinearLayout {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(0, dp(8), 0, dp(8))
         }
-        row.addView(TextView(this).apply {
-            this.text = icon
-            textSize = 17f
-            setTextColor(accent)
+        val box = LinearLayout(this).apply {
             gravity = Gravity.CENTER
             background = rounded(panel, dp(12), border, dp(1))
             layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
+        }
+        box.addView(IconView(this, icon, iconColor).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22))
         })
+        row.addView(box)
         row.addView(label(text, 14f, lightGrey).apply { setPadding(dp(12), 0, 0, 0) })
         return row
     }
@@ -387,10 +381,10 @@ class MainActivity : Activity() {
         // Colour mode tiles in one row
         val tileRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         listOf(
-            Triple("NATURAL", "◆", grey),
-            Triple("WARM", "☀", warm),
-            Triple("AMBER", "☀", Color.rgb(232, 145, 45)),
-            Triple("RED", "☾", Color.rgb(229, 72, 77))
+            Triple("NATURAL", "diamond", grey),
+            Triple("WARM", "sun", warm),
+            Triple("AMBER", "sun", Color.rgb(232, 145, 45)),
+            Triple("RED", "moon", Color.rgb(229, 72, 77))
         ).forEach { (mode, icon, iconColor) ->
             tileRow.addView(makeModeTile(mode, icon, iconColor))
         }
@@ -403,11 +397,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        dimRow.addView(TextView(this).apply {
-            text = "◐"
-            textSize = 18f
-            setTextColor(grey)
-            setPadding(0, 0, dp(8), 0)
+        dimRow.addView(IconView(this, "half", grey).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginEnd = dp(8) }
         })
         dimValue = valuePill("$dimLevel%")
         val dimCol = LinearLayout(this).apply {
@@ -432,11 +423,8 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        warmRow.addView(TextView(this).apply {
-            text = "☀"
-            textSize = 18f
-            setTextColor(Color.rgb(232, 145, 45))
-            setPadding(0, 0, dp(8), 0)
+        warmRow.addView(IconView(this, "sun", Color.rgb(232, 145, 45)).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginEnd = dp(8) }
         })
         warmValue = valuePill("$warmthLevel%")
         val warmCol = LinearLayout(this).apply {
@@ -485,7 +473,7 @@ class MainActivity : Activity() {
             setPadding(dp(18), dp(16), dp(18), dp(16))
         }
         currentCard.addView(label("Current Setting", 13f, lightGrey).apply { gravity = Gravity.CENTER })
-        currentMinutes = label("◷  $selectedLimit Minutes", 20f, white, bold = true).apply {
+        currentMinutes = label("$selectedLimit Minutes", 20f, white, bold = true).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(6), 0, dp(6))
         }
@@ -495,7 +483,7 @@ class MainActivity : Activity() {
         root.addView(currentCard)
         root.addView(Space(this).apply { minimumHeight = dp(14) })
         val testBtn = Button(this).apply {
-            text = "⚡  Test Pop-Up Right Now"
+            text = "Test Pop-Up Right Now"
             textSize = 14f
             setTypeface(typeface, Typeface.BOLD)
             isAllCaps = false
@@ -528,11 +516,8 @@ class MainActivity : Activity() {
             isClickable = true
             isFocusable = true
         }
-        val iconView = TextView(this).apply {
-            text = icon
-            textSize = 22f
-            setTextColor(iconColor)
-            gravity = Gravity.CENTER
+        val iconView = IconView(this, icon, iconColor).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(26), dp(26))
         }
         tile.addView(iconView)
         val labelView = label(mode, 12f, white, bold = true).apply {
@@ -608,13 +593,41 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(18), dp(20), dp(28))
         }
 
+        // Logo header, matching the Home page
+        root.addView(ImageView(this).apply {
+            setImageDrawable(BitmapDrawable(resources, makeLogoBitmap(192)))
+            layoutParams = LinearLayout.LayoutParams(dp(64), dp(64)).apply { gravity = Gravity.CENTER_HORIZONTAL }
+        })
+        val aboutWordmark = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(0, dp(6), 0, 0)
+        }
+        aboutWordmark.addView(label("Blink", 24f, white, bold = true))
+        aboutWordmark.addView(label("Guard", 24f, accent, bold = true))
+        root.addView(aboutWordmark)
+        root.addView(TextView(this).apply {
+            text = "Version 1.4"
+            textSize = 12f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(accent)
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(5), dp(12), dp(5))
+            background = rounded(accentDark, dp(14), accent, dp(1))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+                topMargin = dp(8)
+                bottomMargin = dp(16)
+            }
+        })
+
         val aboutCard = cardLayout()
         aboutCard.addView(label("ABOUT", 11f, accent, bold = true).apply { letterSpacing = 0.08f })
-        aboutCard.addView(label("BlinkGuard", 22f, white, bold = true).apply { setPadding(0, dp(6), 0, 0) })
-        aboutCard.addView(label("System-wide eye comfort — screen tint and rest reminders.", 13f, grey).apply {
-            setPadding(0, dp(4), 0, dp(12))
+        aboutCard.addView(label("System-wide eye comfort — screen tint and rest reminders.", 14f, white, bold = true).apply {
+            setPadding(0, dp(6), 0, dp(8))
         })
-        aboutCard.addView(label("Version 1.4", 14f, white, bold = true))
         aboutPermissionText = label("", 13f, grey).apply { setPadding(0, dp(4), 0, 0) }
         aboutCard.addView(aboutPermissionText)
         root.addView(aboutCard)
@@ -663,6 +676,8 @@ class MainActivity : Activity() {
             textSize = 14f
             setTextColor(lightGrey)
             isChecked = remindersOn
+            thumbTintList = ColorStateList.valueOf(accent)
+            trackTintList = ColorStateList.valueOf(border)
             setPadding(0, dp(8), 0, dp(4))
             setOnCheckedChangeListener { _, checked ->
                 remindersOn = checked
@@ -972,7 +987,7 @@ class MainActivity : Activity() {
             }
         }
         if (::currentMinutes.isInitialized) {
-            currentMinutes.text = "◷  $selectedLimit Minutes"
+            currentMinutes.text = "$selectedLimit Minutes"
         }
     }
 
